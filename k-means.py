@@ -6,14 +6,10 @@ from tqdm import tqdm
 from tools import preprocess_data
 from clss import Point
 from sklearn.cluster import KMeans
+from genetic import genetic_shortest_path
 import math
 
 
-# def distance(point1, point2):  # 计算距离（欧几里得距离）
-#     sq1 = (point1.x - point2.x)**2
-#     sq2 = (point1.y - point2.y)**2
-#     sq3 = (point1.angle*10 - point2.angle*10)**2
-#     return np.sqrt(np.sum([sq1, sq2, sq3]))
 
 #
 # def k_means(data, k, max_iter=10000):
@@ -26,7 +22,7 @@ import math
 #
 #         # 开始迭代
 #     clusters = {}  # 聚类结果，聚类中心的索引idx -> [样本集合]
-#     for i in range(max_iter):  # 迭代次数
+#     for i in range(max_iter):  # 迭代次数Í
 #         # print("开始第{}次迭代".format(i + 1))
 #         for j in range(k):  # 初始化为空列表
 #             clusters[j] = []
@@ -95,26 +91,24 @@ def cal_shortest_path_of_centers(points, class_num, finger_index):
         list = []
         list.append(point.x)
         list.append(point.y)
-        list.append(point.angle)
+        list.append(point.angle*10)
         pointlist.append(list)
     cluster = KMeans(class_num, random_state=1).fit(np.array(pointlist))
     centers = []
+    # colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'b']  # 画图颜色
+    # markers = ['o', 's', 'D', 'v', '^', 'p', '*', '+']  # 画图形状
+    # for i, l in enumerate(cluster.labels_):
+    #     plt.plot(points[i].x, points[i].y, markersize=2, color=colors[l], marker=markers[l], ls='None')
     for item in cluster.cluster_centers_:
         centers.append(Point(x=item[0], y=item[1], angle=item[2]))
     # draw_finger_print(finger_prints, index=finger_index//10, tag=finger_index-100000, centers=np.array(centers))
 
-    min = float('inf')
-    path = []
-    for i in range(len(centers)):
-        sum_distance, seq_result = tsp_quick(centers, i)
-        if sum_distance < min:
-            min = sum_distance
-            path = seq_result
+    min, path, time = genetic_shortest_path(centers, 10, 100)
     return min
 
 
 random.seed(2022)
-finger_prints = preprocess_data(data_path='./data/TZ_同指.csv')
+finger_prints = preprocess_data(data_path='./data/1.csv')
 # finger1 = finger_prints[11]
 # finger2 = finger_prints[10]
 # pointset1 = finger1.point_set
@@ -124,27 +118,56 @@ finger_prints = preprocess_data(data_path='./data/TZ_同指.csv')
 # id2 = finger2.id
 # min_dis2 = cal_shortest_path_of_centers(pointset2, 10, finger_index=finger2.id)
 # # print("id : {}, min_distance:{}".format(id2, min_dis2))
-
-
-total = 0
-for j in tqdm(range(1000)):
-    finger1 = finger_prints[j]
+val = []
+record = []
+# for index in range(0, 1000, 2):
+#     finger1 = finger_prints[index]
+#     pointset1 = finger1.point_set
+#     min_dis1 = cal_shortest_path_of_centers(pointset1, 13, finger_index=finger1.id)
+#
+#     finger2 = finger_prints[index+1]
+#     pointset2 = finger2.point_set
+#     min_dis2 = cal_shortest_path_of_centers(pointset2, 13, finger_index=finger2.id)
+#     val.append(math.fabs(min_dis1-min_dis2))
+#     print('{}'.format(math.fabs(min_dis1-min_dis2)))
+num = 0
+for index in tqdm(range(0, 1000, 2)):
+    finger1 = finger_prints[index]
     pointset1 = finger1.point_set
     min_dis1 = cal_shortest_path_of_centers(pointset1, 5, finger_index=finger1.id)
-    collect = []
-    num = 0
-    for i in range(0, 1000):
+    for i in range(1000):
         finger2 = finger_prints[i]
         pointset2 = finger2.point_set
         min_dis2 = cal_shortest_path_of_centers(pointset2, 5, finger_index=finger2.id)
-        collect.append(math.fabs(min_dis2-min_dis1))
-        # print(math.fabs(min_dis2-min_dis1))
-        if math.fabs(min_dis1 - min_dis2) < 30:
-            collect.append(i)
+        val.append(math.fabs(min_dis1-min_dis2))
+        # print('{}'.format(math.fabs(min_dis1-min_dis2)))
+        if math.fabs(min_dis1-min_dis2) < 50:
+            record.append(i)
             num += 1
-    if j+1 in collect:
-        total += 1
+    # print(len(record))
+    # print(record)
+    print((index+1) in record)
+    # plt.scatter(range(0, 1000), val, marker='.')
+    # plt.show()
 
-print(total)
+print('[Result] The total num of result that has been matched correctly is {}'.format(num))
+# collect = []
+# num = 0
+#
+#
+#
+#
+# # for i in range(0, 1000):
+# #     finger2 = finger_prints[i]
+# #     pointset2 = finger2.point_set
+# #     min_dis2 = cal_shortest_path_of_centers(pointset2, 5, finger_index=finger2.id)
+# #     collect.append(math.fabs(min_dis2-min_dis1))
+# #     # print(math.fabs(min_dis2-min_dis1))
+# #     if math.fabs(min_dis1 - min_dis2) < 30:
+# #         collect.append(i)
+# #         num += 1
+#
+# print(index+1 in collect)
+# print(num)
 # plt.scatter(range(len(collect)), collect)
 # plt.show()

@@ -5,7 +5,7 @@ from clss import get_distance
 
 # 将txt中的数据转化成指纹类的数组
 def preprocess_data(data_path):
-    data = np.genfromtxt(data_path, delimiter=',')
+    data = np.genfromtxt(data_path, delimiter=',',)
     finger_prints = []
     for line in data:
         line = [item.astype("int") for item in line if not np.isnan(item)]
